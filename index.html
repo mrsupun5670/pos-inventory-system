@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>POS + Inventory Management System</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <div class="header-content">
+          <div class="header-left">
+            <h1>Neptune Mobile</h1>
+            <nav>
+              <button id="nav-pos" class="nav-btn active">Sale</button>
+              <button id="nav-inventory" class="nav-btn">GRN</button>
+              <button id="nav-analytics" class="nav-btn">Analytics</button>
+              <button id="nav-order-history" class="nav-btn">Order History</button>
+              <button id="nav-customers" class="nav-btn">Customers</button>
+              <button id="nav-reports" class="nav-btn">Reports</button>
+              <button id="nav-settings" class="nav-btn">Settings</button>
+            </nav>
+          </div>
+          <div class="header-right">
+            <button id="reset-btn" class="header-btn reset-btn" style="display: none;">Reset</button>
+            <span id="user-role-display" style="display: none; color: white; font-weight: bold; margin-right: 0.5rem;"></span>
+            <button id="login-btn" class="header-btn login-btn">Login</button>
+            <button id="logout-btn" class="header-btn logout-btn" style="display: none;">Logout</button>
+            <button id="close-app-btn" class="header-btn close-btn">✕ Close</button>
+          </div>
+        </div>
+      </header>
+
+      <main>
+        <!-- POS Section -->
+        <section id="pos-section" class="section active">
+          <div class="sale-layout">
+            <!-- Left Panel -->
+            <div class="left-panel">
+              <!-- Product Code Input -->
+              <div class="search-box">
+                <label for="product-code-input">Product Code</label>
+                <input
+                  type="text"
+                  id="product-code-input"
+                  placeholder="Enter product code..."
+                  autocomplete="off"
+                />
+              </div>
+
+              <!-- Search Results Table -->
+              <div class="search-results" id="search-results-container">
+                <table class="results-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Name</th>
+                      <th>Cost</th>
+                      <th>Sale Price</th>
+                      <th>Qty</th>
+                    </tr>
+                  </thead>
+                  <tbody id="search-results-body"></tbody>
+                </table>
+              </div>
+
+              <!-- Selected Product Details -->
+              <div class="selected-product-details" id="selected-product-section" style="display: none">
+                <div class="product-info-grid">
+                  <div class="info-item">
+                    <label>Product Code:</label>
+                    <span id="selected-product-code"></span>
+                  </div>
+                  <div class="info-item">
+                    <label>Product Name:</label>
+                    <span id="selected-product-name"></span>
+                  </div>
+                  <div class="info-item">
+                    <label>Cost Price:</label>
+                    <span id="selected-product-cost"></span>
+                  </div>
+                  <div class="info-item">
+                    <label>Available Qty:</label>
+                    <span id="selected-product-available-qty"></span>
+                  </div>
+                </div>
+
+                <div class="input-group-horizontal">
+                  <div class="input-field">
+                    <label for="qty-input">Quantity (- for return)</label>
+                    <input type="number" id="qty-input" placeholder="Enter qty (negative for return)..." step="1" />
+                  </div>
+                  <div class="input-field">
+                    <label for="default-sale-price">Default Sale Price</label>
+                    <input type="text" id="default-sale-price" readonly class="default-price" />
+                  </div>
+                  <div class="input-field">
+                    <label for="sale-price-input">Selling Price</label>
+                    <input type="number" id="sale-price-input" placeholder="Enter price..." step="0.01" min="0" />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel -->
+            <div class="right-panel">
+              <h2>Cart Items</h2>
+
+              <!-- Cart Table -->
+              <div class="cart-table-container">
+                <table class="cart-table">
+                  <thead>
+                    <tr>
+                      <th>Code</th>
+                      <th>Product</th>
+                      <th>Price</th>
+                      <th>Qty</th>
+                      <th>Total</th>
+                      <th>×</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cart-items"></tbody>
+                </table>
+              </div>
+
+              <!-- Bottom Section -->
+              <div class="bottom-section">
+                <!-- Cart Summary -->
+                <div class="cart-summary">
+                  <div class="summary-row total">
+                    <span>Grand Total:</span>
+                    <span id="total-sale">Rs. 0.00</span>
+                  </div>
+                  <div class="summary-row">
+                    <span>Number of Items:</span>
+                    <span id="total-items">0</span>
+                  </div>
+                </div>
+
+                <!-- Customer Section (Optional) -->
+                <div class="customer-section">
+                  <div class="customer-input" style="position: relative;">
+                    <label for="customer-name-input">Customer Name (Optional)</label>
+                    <input type="text" id="customer-name-input" placeholder="Enter customer name..." autocomplete="off" />
+                    <div id="customer-dropdown" class="customer-autocomplete-dropdown" style="display: none;"></div>
+                  </div>
+                  <div class="customer-input">
+                    <label for="customer-mobile-input">Mobile (Optional)</label>
+                    <input type="text" id="customer-mobile-input" placeholder="Enter mobile number..." maxlength="15" />
+                  </div>
+                </div>
+
+              <!-- Payment Section -->
+                <div class="payment-section">
+                  <div class="payment-input">
+                    <label for="paid-amount-input">Paid Amount</label>
+                    <input type="number" id="paid-amount-input" placeholder="Double-space or click here..." step="0.01" min="0" />
+                  </div>
+                  <div class="balance-display" id="balance-display" style="display: none">
+                    <span>Balance:</span>
+                    <span id="balance-amount">Rs. 0.00</span>
+                  </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="cart-actions">
+                  <button id="print-bill-btn" class="btn btn-print">Save & Print (Enter)</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Inventory Section -->
+        <section id="inventory-section" class="section">
+          <div class="inventory-header">
+            <div class="grn-header-left">
+              <h2>GRN - Goods Received Note</h2>
+              <div class="grn-summary">
+                <div class="grn-summary-item">
+                  <span class="grn-summary-label">Total Item Types:</span>
+                  <span class="grn-summary-value" id="grn-total-items">0</span>
+                </div>
+                <div class="grn-summary-item">
+                  <span class="grn-summary-label">Total Stock Value:</span>
+                  <span class="grn-summary-value" id="grn-total-value">Rs. 0.00</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+              <button id="add-product-btn" class="btn btn-success">
+                + Add Product
+              </button>
+              <button id="grn-report-btn" class="btn btn-primary">
+                📄 GRN Report
+              </button>
+            </div>
+          </div>
+
+          <div class="grn-search-container">
+            <input type="text" id="grn-search-input" placeholder="Search products by code or name..." autocomplete="off" />
+            <select id="grn-filter-select" class="grn-filter-select">
+              <option value="all">All Products</option>
+              <option value="low-stock">Low Stock (Qty < 5)</option>
+              <option value="out-of-stock">Out of Stock (Qty = 0)</option>
+            </select>
+          </div>
+
+          <div class="grn-table-container">
+            <table class="grn-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">ID</th>
+                  <th style="width: 90px;">Code</th>
+                  <th style="width: 180px;">Product Name</th>
+                  <th style="width: 90px;">Cost</th>
+                  <th style="width: 90px;">Available Qty</th>
+                  <th style="width: 110px;">Cost × Qty</th>
+                  <th style="width: 110px;">Selling Price</th>
+                  <th style="width: 140px;">Last Updated</th>
+                  <th style="width: 90px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="grn-items"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Analytics Section -->
+        <section id="analytics-section" class="section">
+          <div class="analytics-content">
+            <h2>Sales Analytics</h2>
+
+            <!-- Income Summary Cards -->
+            <div class="analytics-summary">
+              <div class="summary-card">
+                <div class="card-icon daily-icon">📅</div>
+                <div class="card-content">
+                  <h3>Daily Income</h3>
+                  <p class="income-value" id="daily-income">Rs. 0.00</p>
+                </div>
+              </div>
+              <div class="summary-card">
+                <div class="card-icon weekly-icon">📊</div>
+                <div class="card-content">
+                  <h3>Weekly Income</h3>
+                  <p class="income-value" id="weekly-income">Rs. 0.00</p>
+                </div>
+              </div>
+              <div class="summary-card">
+                <div class="card-icon monthly-icon">📈</div>
+                <div class="card-content">
+                  <h3>Monthly Income</h3>
+                  <p class="income-value" id="monthly-income">Rs. 0.00</p>
+                </div>
+              </div>
+              <div class="summary-card">
+                <div class="card-icon yearly-icon">💰</div>
+                <div class="card-content">
+                  <h3>Yearly Income</h3>
+                  <p class="income-value" id="yearly-income">Rs. 0.00</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-container">
+              <div class="chart-box">
+                <h3>Sales Overview (Last 7 Days)</h3>
+                <canvas id="sales-chart"></canvas>
+              </div>
+              <div class="chart-box">
+                <h3>Cost vs Sales vs Profit</h3>
+                <canvas id="profit-chart"></canvas>
+              </div>
+            </div>
+
+            <div class="charts-container">
+              <div class="chart-box full-width">
+                <h3>Monthly Sales Trend</h3>
+                <canvas id="monthly-chart"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Customers Section -->
+        <section id="customers-section" class="section">
+          <div class="customers-header">
+            <h2>Customer List</h2>
+            <input
+              type="text"
+              id="customer-search-input"
+              placeholder="Search by name or mobile..."
+              style="padding: 0.6rem; font-size: 0.9rem; border: 2px solid #ddd; border-radius: 6px; width: 300px;"
+            />
+          </div>
+
+          <div class="customers-table-container">
+            <table class="customers-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">ID</th>
+                  <th style="width: 250px;">Name</th>
+                  <th style="width: 150px;">Mobile</th>
+                  <th style="width: 100px;">Total Orders</th>
+                  <th style="width: 150px;">Last Order</th>
+                </tr>
+              </thead>
+              <tbody id="customers-items"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Order History Section -->
+        <section id="order-history-section" class="section">
+          <div class="order-history-header">
+            <h2>Order History</h2>
+          </div>
+
+          <div class="order-search-container">
+            <input type="text" id="order-search-input" placeholder="Search orders by order/bill number..." autocomplete="off" />
+          </div>
+
+          <div class="order-history-table-container">
+            <table class="order-history-table">
+              <thead>
+                <tr>
+                  <th style="width: 80px;">Order ID</th>
+                  <th style="width: 150px;">Date</th>
+                  <th style="width: 120px;">Time</th>
+                  <th style="width: 120px;">Total Sale</th>
+                  <th style="width: 120px;">Total Cost</th>
+                  <th style="width: 120px;">Profit</th>
+                  <th style="width: 100px;">Items</th>
+                  <th style="width: 100px;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="order-history-items"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Settings Section -->
+        <section id="settings-section" class="section">
+          <div class="settings-header">
+            <h2>Admin Settings</h2>
+          </div>
+
+          <div class="settings-content">
+            <div class="settings-card">
+              <h3>GRN Password Management</h3>
+              <p class="settings-description">Change the password for GRN (Goods Received Note) access. This password allows access to Sales and GRN sections only.</p>
+
+              <div class="settings-form">
+                <div class="form-field">
+                  <label for="current-grn-password">Current GRN Password</label>
+                  <input type="password" id="current-grn-password" placeholder="Enter current GRN password" autocomplete="off">
+                </div>
+                <div class="form-field">
+                  <label for="new-grn-password">New GRN Password</label>
+                  <input type="password" id="new-grn-password" placeholder="Enter new GRN password" autocomplete="off">
+                </div>
+                <div class="form-field">
+                  <label for="confirm-grn-password">Confirm New Password</label>
+                  <input type="password" id="confirm-grn-password" placeholder="Confirm new password" autocomplete="off">
+                </div>
+                <button id="update-grn-password-btn" class="btn btn-primary">Update GRN Password</button>
+              </div>
+            </div>
+
+            <div class="settings-card">
+              <h3>User Roles Information</h3>
+              <div class="role-info">
+                <div class="role-item">
+                  <strong>👤 Cashier:</strong>
+                  <p>Username: <code>cashier</code> (No password required)</p>
+                  <p>Access: Sales section only</p>
+                </div>
+                <div class="role-item">
+                  <strong>📦 GRN Staff:</strong>
+                  <p>Username: <code>savindu</code></p>
+                  <p>Access: Sales + GRN sections</p>
+                </div>
+                <div class="role-item">
+                  <strong>🔑 Admin:</strong>
+                  <p>Username: <code>admin</code> | Password: <code>20011002</code></p>
+                  <p>Access: All sections + Settings</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reports Section -->
+        <section id="reports-section" class="section">
+          <div class="reports-header">
+            <h2>Sales Reports</h2>
+            <div class="report-period-tabs">
+              <button class="period-tab active" data-period="daily">Daily</button>
+              <button class="period-tab" data-period="weekly">Weekly</button>
+              <button class="period-tab" data-period="monthly">Monthly</button>
+              <button class="period-tab" data-period="yearly">Yearly</button>
+            </div>
+          </div>
+
+          <div class="reports-filters">
+            <div class="date-filter-group">
+              <label>From:</label>
+              <input type="date" id="report-from" />
+            </div>
+            <div class="date-filter-group">
+              <label>To:</label>
+              <input type="date" id="report-to" />
+            </div>
+            <button id="generate-report" class="btn btn-primary">
+              Generate Report
+            </button>
+          </div>
+
+          <div class="report-print-buttons" style="margin: 15px 0; display: flex; gap: 10px; flex-wrap: wrap;">
+            <button id="print-daily-summary" class="btn btn-print">📄 Daily Summary</button>
+            <button id="print-product-sales" class="btn btn-print">📊 Product Sales</button>
+            <button id="print-profit-analysis" class="btn btn-print">💰 Profit Analysis</button>
+            <button id="print-returns-summary" class="btn btn-print">↩️ Returns Summary</button>
+            <button id="print-detailed-report" class="btn btn-print">📋 Detailed Report</button>
+          </div>
+
+          <div id="report-results">
+            <div class="report-table-container">
+              <table class="report-table">
+                <thead>
+                  <tr>
+                    <th style="width: 80px;">Code</th>
+                    <th style="width: 200px;">Product Name</th>
+                    <th style="width: 80px;">Qty</th>
+                    <th style="width: 100px;">Cost</th>
+                    <th style="width: 100px;">Sold Price</th>
+                    <th style="width: 120px;">Qty × Cost</th>
+                    <th style="width: 120px;">Qty × Sold</th>
+                    <th style="width: 120px;">Profit</th>
+                  </tr>
+                </thead>
+                <tbody id="report-items"></tbody>
+                <tfoot>
+                  <tr class="report-total-row">
+                    <td colspan="5" style="text-align: right; font-weight: bold;">TOTAL:</td>
+                    <td id="total-cost-qty" style="font-weight: bold;">Rs. 0.00</td>
+                    <td id="total-sold-qty" style="font-weight: bold;">Rs. 0.00</td>
+                    <td id="total-profit" style="font-weight: bold;">Rs. 0.00</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Balance Modal -->
+    <div id="balance-modal" class="modal" style="display: none">
+      <div class="modal-content balance-modal-content">
+        <h2 class="balance-modal-title">✓ Order Saved Successfully!</h2>
+        <div class="modal-body">
+          <div class="balance-amount-display">
+            <p class="balance-label">Your Balance:</p>
+            <p class="balance-value" id="modal-balance">Rs. 0.00</p>
+          </div>
+          <p class="next-customer-text">Next Customer Please</p>
+        </div>
+        <div class="modal-footer">
+          <button id="modal-close-btn" class="btn btn-primary-modal">OK (Press Enter)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error Modal -->
+    <div id="error-modal" class="modal" style="display: none">
+      <div class="modal-content error-modal-content">
+        <h2 class="error-title">⚠️ Error</h2>
+        <div class="modal-body">
+          <p id="error-message"></p>
+        </div>
+        <div class="modal-footer">
+          <button id="error-close-btn" class="btn btn-danger-modal">OK (Press Enter)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirm Modal -->
+    <div id="confirm-modal" class="modal" style="display: none">
+      <div class="modal-content confirm-modal-content">
+        <h2 id="confirm-title">Confirm Action</h2>
+        <div class="modal-body">
+          <p id="confirm-message"></p>
+        </div>
+        <div class="modal-footer confirm-footer">
+          <button id="confirm-yes-btn" class="btn btn-primary-modal">Yes</button>
+          <button id="confirm-no-btn" class="btn btn-secondary-modal">No</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="success-modal" class="modal" style="display: none">
+      <div class="modal-content success-modal-content">
+        <h2 class="success-title">✓ Success</h2>
+        <div class="modal-body">
+          <p id="success-message"></p>
+        </div>
+        <div class="modal-footer">
+          <button id="success-close-btn" class="btn btn-success-modal">OK (Press Enter)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- GRN Update Confirmation Modal -->
+    <div id="grn-confirm-modal" class="modal" style="display: none">
+      <div class="modal-content grn-confirm-modal-content">
+        <h2 class="grn-confirm-title">⚠️ Confirm Update</h2>
+        <div class="modal-body">
+          <div class="grn-confirm-details">
+            <p id="grn-confirm-message"></p>
+            <div class="grn-change-display">
+              <div class="change-row">
+                <span class="change-label">Previous Value:</span>
+                <span class="change-value old" id="grn-old-value"></span>
+              </div>
+              <div class="change-row">
+                <span class="change-label">New Value:</span>
+                <span class="change-value new" id="grn-new-value"></span>
+              </div>
+            </div>
+          </div>
+          <p class="grn-confirm-question">Do you want to save this change?</p>
+        </div>
+        <div class="modal-footer grn-confirm-footer">
+          <button id="grn-confirm-yes-btn" class="btn btn-primary-modal">Yes, Save</button>
+          <button id="grn-confirm-no-btn" class="btn btn-secondary-modal">No, Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="order-details-modal" class="modal" style="display: none">
+      <div class="modal-content order-details-modal-content">
+        <h2 class="order-details-title">📋 Order Details</h2>
+        <div class="modal-body">
+          <div class="order-details-info">
+            <div class="order-info-row">
+              <span class="info-label">Order ID:</span>
+              <span class="info-value" id="order-detail-id"></span>
+            </div>
+            <div class="order-info-row" id="order-customer-row" style="display: none;">
+              <span class="info-label">Customer:</span>
+              <span class="info-value" id="order-detail-customer"></span>
+            </div>
+            <div class="order-info-row" id="order-mobile-row" style="display: none;">
+              <span class="info-label">Mobile:</span>
+              <span class="info-value" id="order-detail-mobile"></span>
+            </div>
+            <div class="order-info-row">
+              <span class="info-label">Date:</span>
+              <span class="info-value" id="order-detail-date"></span>
+            </div>
+            <div class="order-info-row">
+              <span class="info-label">Time:</span>
+              <span class="info-value" id="order-detail-time"></span>
+            </div>
+          </div>
+
+          <div class="order-details-table-container">
+            <table class="order-details-table">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Product</th>
+                  <th>Qty</th>
+                  <th>Cost/Unit</th>
+                  <th>Sale/Unit</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody id="order-detail-items"></tbody>
+            </table>
+          </div>
+
+          <div class="order-details-summary">
+            <div class="summary-row">
+              <span>Total Cost:</span>
+              <span id="order-detail-total-cost"></span>
+            </div>
+            <div class="summary-row">
+              <span>Total Sale:</span>
+              <span id="order-detail-total-sale"></span>
+            </div>
+            <div class="summary-row total">
+              <span>Profit:</span>
+              <span id="order-detail-profit"></span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="order-details-close-btn" class="btn btn-secondary-modal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal" style="display: none">
+      <div class="modal-content login-modal-content">
+        <h2 class="login-title">🔐 User Login</h2>
+        <div class="modal-body">
+          <form id="login-form">
+            <div class="form-field-login">
+              <label for="login-username">Username</label>
+              <input type="text" id="login-username" placeholder="cashier / savindu / admin" required autocomplete="off">
+            </div>
+            <div class="form-field-login" id="password-field-container">
+              <label for="login-password">Password</label>
+              <input type="password" id="login-password" placeholder="Enter password">
+            </div>
+            <p style="font-size: 0.75rem; color: #666; margin-top: 0.5rem;">
+              💡 Cashier login: username "cashier" (no password required)
+            </p>
+          </form>
+        </div>
+        <div class="modal-footer login-footer">
+          <button id="login-submit-btn" class="btn btn-primary-modal">Login</button>
+          <button id="login-cancel-btn" class="btn btn-secondary-modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div id="logout-confirm-modal" class="modal" style="display: none">
+      <div class="modal-content logout-confirm-modal-content">
+        <h2 class="logout-confirm-title">⚠️ Confirm Logout</h2>
+        <div class="modal-body">
+          <p class="logout-confirm-text">Are you sure you want to logout?</p>
+          <p class="logout-warning">You will be returned to the Sale page and admin features will be locked.</p>
+        </div>
+        <div class="modal-footer logout-confirm-footer">
+          <button id="logout-confirm-yes-btn" class="btn btn-danger-modal">Yes, Logout</button>
+          <button id="logout-confirm-no-btn" class="btn btn-secondary-modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Product Modal -->
+    <div id="add-product-modal" class="modal" style="display: none">
+      <div class="modal-content add-product-modal-content">
+        <h2 class="add-product-title">➕ Add New Product</h2>
+        <div class="modal-body">
+          <form id="add-product-form">
+            <div class="form-grid">
+              <div class="form-field full-width">
+                <label for="new-product-code">Product Code *</label>
+                <input type="text" id="new-product-code" placeholder="e.g., P016" required>
+              </div>
+              <div class="form-field full-width">
+                <label for="new-product-name">Product Name *</label>
+                <input type="text" id="new-product-name" placeholder="e.g., Mountain Dew 330ml" required>
+              </div>
+              <div class="form-field">
+                <label for="new-product-cost">Cost Price (Rs.) *</label>
+                <input type="number" id="new-product-cost" placeholder="0.00" step="0.01" min="0.01" required>
+              </div>
+              <div class="form-field">
+                <label for="new-product-qty">Initial Quantity *</label>
+                <input type="number" id="new-product-qty" placeholder="0" step="1" min="1" required>
+              </div>
+              <div class="form-field full-width">
+                <label for="new-product-sale-price">Selling Price (Rs.) *</label>
+                <input type="number" id="new-product-sale-price" placeholder="0.00" step="0.01" min="0.01" required>
+              </div>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer add-product-footer">
+          <button id="add-product-submit-btn" class="btn btn-success-modal">Add Product</button>
+          <button id="add-product-cancel-btn" class="btn btn-secondary-modal">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
